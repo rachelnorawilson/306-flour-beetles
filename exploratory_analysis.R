@@ -1,53 +1,57 @@
 ### Exploratory analyses for the Biology 306 flour beetle population growth project ####
 
 # Packages needed:
+library(stringr)
+library(dplyr)
+library(ggplot2)
+library(RColorBrewer)
 
-# Datasets needed:
-beetle.full <- read.csv("")
+# Dataset needed:
+beetle.full <- read.csv("beetle_data_FULL.csv", header = TRUE)
 
+# Adding column for temperature
+beetle.full$temperature <- sapply(str_split(beetle.full$code, "-"), function(x) tail(x, n = 1))
 
+# Creating a new data frame for total count
+beetle <- beetle.full %>%
+  group_by(code, week, temperature) %>%
+  summarise(total.count = sum(count))
 
+# Calculating mean final density
+beetle.max.week <- beetle %>%
+  group_by(code) %>%
+  filter(week == max(week)) %>%
+  group_by(temperature) %>%
+  summarise(mean.total.count = mean(total.count))
 
+# Quick visualizations for each temperature
 
-##### CODE FROM SEAN ####
+#X <- 35 # Swap out for different temperatures
+#beetle.subset <- beetle %>%
+#  filter(temperature == X)
 
+palette <- rev(brewer.pal(n = 6, name = "RdBu"))
 
-#--Clear memory
-rm(list=ls(all=T))
-
-# << DIRECTORIES >>
-#--Set working directory with a text string ending with "/".
-setwd("E:/Documents/306 BIOL/2022-2023_W1/Labs/")
-
-# << DATASETS >>
-#--Load datasets.
-library(readxl)
-# Make function for importing multiple sheets
-# https://www.geeksforgeeks.org/how-to-read-a-xlsx-file-with-multiple-sheets-in-r/
-multiplesheets <- function(fname) {
+(gg.all <- ggplot(aes(x = week, y = total.count, color = temperature, group = code), 
+                  data = beetle) +
+  scale_color_manual(values = palette) +
+  facet_wrap(~ temperature) +
+  theme_classic() +
+  geom_line() +
+  geom_point() +
+  labs(x = "Week", y = "Total count", color = "Temperature (°C)"))
+ggsave("all_temps.png", plot = gg.all, width = 10, height = 5)
   
-  # getting info about all excel sheets
-  sheets <- readxl::excel_sheets(fname)
-  tibble <- lapply(sheets, function(x) readxl::read_excel(fname, sheet = x, na="NA"))
-  data_frame <- lapply(tibble, as.data.frame)
-  
-  # assigning names to data frames
-  names(data_frame) <- sheets
-  
-  # print data frame
-  print(data_frame)
-}
 
-pooled <- multiplesheets("Lab7_Analysis.xlsx")$pooled
-pooled_sum <- multiplesheets("Lab7_Analysis.xlsx")$pooled_sum
-pooled_average <- multiplesheets("Lab7_Analysis.xlsx")$pooled_average
-temp <- multiplesheets("Lab7_Analysis.xlsx")$temperature_data
-metadata <- multiplesheets("Lab7_Analysis.xlsx")$metadata
 
-#--Make a quick plot of averaged data
-plot(pooled_average$lab_week, pooled_average$mean_count,
-     pch = 19,
-     col = factor(pooled_average$treatment))
+
+#### STOP!!! ####
+
+
+# The following is a subset of code from Sean, to be tweaked and added in. 
+# See original file for appropriate context (Lab_7_Analysis)
+
+
 
 #-- Do nls() fits of logistic to time series data (mean_count vs. lab_week)
 # Define logistic function (see https://eligurarie.github.io/EFB370/labs/lab6/Lab6_FittingLogisticCurves.html)
