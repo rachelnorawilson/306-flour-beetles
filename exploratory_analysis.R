@@ -1,4 +1,4 @@
-### Exploratory analyses for the Biology 306 flour beetle population growth project ####
+### Exploratory analyses for the Biology 306 flour beetle population growth project
 
 # Packages needed:
 library(stringr)
@@ -8,6 +8,8 @@ library(RColorBrewer)
 
 # Dataset needed:
 beetle.full <- read.csv("beetle_data_FULL.csv", header = TRUE)
+
+#### STEP 1: Data wrangling ####
 
 # Adding column for temperature
 beetle.full$temperature <- sapply(str_split(beetle.full$code, "-"), function(x) tail(x, n = 1))
@@ -24,7 +26,7 @@ beetle.max.week <- beetle %>%
   group_by(temperature) %>%
   summarise(mean.total.count = mean(total.count))
 
-# Quick visualizations for each temperature
+#### STEP 2: Visualizations ####
 
 #X <- 35 # Swap out for different temperatures
 #beetle.subset <- beetle %>%
@@ -42,6 +44,24 @@ palette <- rev(brewer.pal(n = 6, name = "RdBu"))
   labs(x = "Week", y = "Total count", color = "Temperature (°C)"))
 ggsave("all_temps.png", plot = gg.all, width = 10, height = 5)
   
+
+#### STEP 3: Fitting models ####
+
+# Define logistic function (see https://eligurarie.github.io/EFB370/labs/lab6/Lab6_FittingLogisticCurves.html)
+N.logistic <- function(x, N0, K, r0) K/(1 + ((K - N0)/N0) * exp(-r0*x))
+
+beetle.subset <- subset(beetle, code == levels(factor(beetle$code))[14]) # specify temp and population
+plot(total.count ~ week, data = beetle.subset) #visualize
+
+logistic.fit <- nls(total.count ~ N.logistic(week, N0, K, r0), 
+                    data = beetle.subset,
+                    start = list(N0 = 5, K = 50, r0 = 1))
+# Datasets throwing error: 1, 2, 5, 7, 8, 11, 12, 14, 16, 17, 18, 19, 22, 23, 24, 25, 26, 27
+summary(logistic.fit)
+
+
+
+
 
 
 
