@@ -48,16 +48,36 @@ ggsave("all_temps.png", plot = gg.all, width = 10, height = 5)
 #### STEP 3: Fitting models ####
 
 # Define logistic function (see https://eligurarie.github.io/EFB370/labs/lab6/Lab6_FittingLogisticCurves.html)
+
+
 N.logistic <- function(x, N0, K, r0) K/(1 + ((K - N0)/N0) * exp(-r0*x))
 
-beetle.subset <- subset(beetle, code == levels(factor(beetle$code))[14]) # specify temp and population
+beetle.subset <- subset(beetle, code == levels(factor(beetle$code))[20]) # specify temp and population
 plot(total.count ~ week, data = beetle.subset) #visualize
+
+#ss.logistic.fit <- nls(total.count ~ SSlogis(week, 14, 11, scal), 
+#                    data = beetle.subset)
 
 logistic.fit <- nls(total.count ~ N.logistic(week, N0, K, r0), 
                     data = beetle.subset,
                     start = list(N0 = 5, K = 50, r0 = 1))
 # Datasets throwing error: 1, 2, 5, 7, 8, 11, 12, 14, 16, 17, 18, 19, 22, 23, 24, 25, 26, 27
 summary(logistic.fit)
+
+## IN PROGRESS: Coerce function to start with N0 of 5? 
+N.logistic.five <- function(x, K, r0) K/(1 + ((K - 5)/5) * exp(-r0*x))
+logistic.fit.five <-  nls(total.count ~ N.logistic.five(week, K, r0), 
+                          data = beetle.subset,
+                          start = list(K = 50, r0 = 1))
+
+
+ggplot(beetle.subset, aes(x=week, y=total.count)) + 
+  geom_point(size=3) + 
+  geom_smooth(method = "nls", method.args = list(formula = y ~ K/(1 + ((K - N0)/N0)*exp(-r0*x)), start = list(N0 = 5, K = 50, r0 = 1)), 
+              data = beetle.subset,
+              se = FALSE) +
+  theme_classic()
+
 
 
 
