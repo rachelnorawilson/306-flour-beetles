@@ -52,7 +52,7 @@ ggsave("all_temps.png", plot = gg.all, width = 10, height = 5)
 
 N.logistic <- function(x, N0, K, r0) K/(1 + ((K - N0)/N0) * exp(-r0*x))
 
-beetle.subset <- subset(beetle, code == levels(factor(beetle$code))[20]) # specify temp and population
+beetle.subset <- subset(beetle, code == levels(factor(beetle$code))[1]) # specify temp and population
 plot(total.count ~ week, data = beetle.subset) #visualize
 
 #ss.logistic.fit <- nls(total.count ~ SSlogis(week, 14, 11, scal), 
@@ -64,7 +64,27 @@ logistic.fit <- nls(total.count ~ N.logistic(week, N0, K, r0),
 # Datasets throwing error: 1, 2, 5, 7, 8, 11, 12, 14, 16, 17, 18, 19, 22, 23, 24, 25, 26, 27
 summary(logistic.fit)
 
-## IN PROGRESS: Coerce function to start with N0 of 5? 
+## TRYING STUFF OUT - IN PROGRESS
+
+## growthcurver package?
+
+library(growthcurver)
+(gc.fit <- SummarizeGrowth(beetle.subset$week, beetle.subset$total.count))
+plot(gc.fit)
+
+## Truncate populations with lag? How to automate? What threshold?
+
+trunc.pop <- subset(beetle.subset, week >= 8)
+
+  logistic.fit <- nls(total.count ~ N.logistic(week, N0, K, r0), 
+                    data = trunc.pop,
+                    start = list(N0 = 5, K = 50, r0 = 1))
+
+## Try fitting only exponential model to part of curve (maybe start to inflection point?) and extracting r. Justification: r should not differ greatly between logistic and exponential growth models
+
+
+
+## Coerce function to start with N0 of 5? Solves some errors, creates others
 N.logistic.five <- function(x, K, r0) K/(1 + ((K - 5)/5) * exp(-r0*x))
 logistic.fit.five <-  nls(total.count ~ N.logistic.five(week, K, r0), 
                           data = beetle.subset,
